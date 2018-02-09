@@ -33,13 +33,12 @@ int X_val               = 0;
 int Y_val               = 0;
 int Z_val               = 0;
 int pushState           = 0;
+char cmd[4];                      // array that holds command for two or more commands
 
-char cmd[4]; // array that holds command for two or more commands
-
-int middlePoint = 1023 / 2;       // 1023 is the default max value of analog
-int wiperMiddlePoint = 500 / 2;
-int threshold = 80; // it helps reading sensitivity
-int wiperThreshold = 100; // it helps reading sensitivity
+int axisMiddlePoint = 1023 / 2;       // 1023 is the default max value of analog
+int wiperMiddlePoint = 512 / 2;   // result will be the middle point of wiper, which added/subtracted by the wiper threshold
+int wiperThreshold = 180;         // it helps reading sensitivity of the Z-axis/Wiper
+int axisThreshold = 80;           // it helps reading sensitivity X & Y axis
 
 void setup() {
   Serial.begin(9600);
@@ -58,16 +57,17 @@ void loop() {
   Z_val = analogRead(JOYZ_PIN);
   pushState = digitalRead(PUSH_PIN);
 
-  if (Y_val > (middlePoint + threshold) || Y_val < (middlePoint - threshold)) {
-    cmd[0] = (Y_val > (middlePoint + threshold))  ? 'F' : 'B';
+  if (Y_val > (axisMiddlePoint + axisThreshold) || Y_val < (axisMiddlePoint - axisThreshold)) {
+    cmd[0] = (Y_val > (axisMiddlePoint + axisThreshold))  ? 'F' : 'B';
   } else {
     cmd[0] = 0;
   }
-  if (X_val > (middlePoint + threshold) || X_val < (middlePoint - threshold)) {
-    cmd[1] = (X_val > (middlePoint + threshold)) ? 'L' : 'R';
+  if (X_val > (axisMiddlePoint + axisThreshold) || X_val < (axisMiddlePoint - axisThreshold)) {
+    cmd[1] = (X_val > (axisMiddlePoint + axisThreshold)) ? 'L' : 'R';
   } else {
     cmd[1] = 0;
   }
+  // print values of joystick
   lcd.setCursor(0, 0);
   lcd.print("X-val: "); lcd.print(X_val);
   lcd.setCursor(0, 1);
@@ -88,10 +88,11 @@ void command() {
       cmds += c;
     }
   }
-
+  // print command
   lcd.setCursor(0, 4);
   lcd.print("CMD  : "); lcd.print(cmds);
   lcd.setCursor(0, 5);
+
   // check if commands is not empty
   if (cmds != NULL && cmds != '\0') {
     Serial.println(cmds);
@@ -116,32 +117,16 @@ void command() {
     }
   } else {
     if (Z_val > (wiperMiddlePoint + wiperThreshold) || Z_val < (wiperMiddlePoint - wiperThreshold)) {
-      /*
-        if (Z_val > (wiperMiddlePoint + wiperThreshold)) {
+      if (Z_val > (wiperMiddlePoint + wiperThreshold)) {
         lcd.print("--WIPE_RIGHT--");
         encode_cmd(CMD_WIPE_RIGHT);
-        } else {
-        lcd.print("--WIPE_LEFT--");
-        encode_cmd(CMD_WIPE_LEFT);
-        }*/
-      /**** start for testing only ****/
-      if (Z_val < 20 ) {
+      } else if (Z_val < (wiperMiddlePoint - wiperThreshold)) {
         lcd.print("--WIPE_LEFT--");
         encode_cmd(CMD_WIPE_LEFT);
       } else {
-        if (Z_val > (500 - 20) ) {
-          lcd.print("--WIPE_RIGHT--");
-          encode_cmd(CMD_WIPE_RIGHT);
-        } else {
-          if (pushState == HIGH) {
-            encode_cmd(CMD_PUSH);
-          } else {
-            send_nosignal();
-            lcd.print("--NO SIGNAL--");
-          }
-        }
+        lcd.print("--NO SIGNAL--");
+        send_nosignal();
       }
-      /**** end for testing only ****/
     } else {
       if (pushState == HIGH) {
         encode_cmd(CMD_PUSH);
@@ -171,6 +156,6 @@ void encode_cmd( int code) {
 }
 
 void send_nosignal() {
-  //digitalWrite( SI_PIN, LOW);
-  //delayMicroseconds(FUNCTION_FREQ);
+  digitalWrite( SI_PIN, LOW);
+  delayMicroseconds(FUNCTION_FREQ);
 }
