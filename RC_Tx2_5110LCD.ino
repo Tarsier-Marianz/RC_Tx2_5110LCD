@@ -29,16 +29,16 @@ int PUSH_LED_STATE      = 11;
 int JOYX_PIN            = A0;
 int JOYY_PIN            = A1;
 int JOYZ_PIN            = A2;
+/* constanst and dynamic variable declaration */
+char cmd[4];                          // array that holds command for two or more commands
 int X_val               = 0;
 int Y_val               = 0;
 int Z_val               = 0;
 int pushState           = 0;
-char cmd[4];                      // array that holds command for two or more commands
-
-int axisMiddlePoint = 1023 / 2;       // 1023 is the default max value of analog
-int wiperMiddlePoint = 512 / 2;   // result will be the middle point of wiper, which added/subtracted by the wiper threshold
-int wiperThreshold = 180;         // it helps reading sensitivity of the Z-axis/Wiper
-int axisThreshold = 80;           // it helps reading sensitivity X & Y axis
+int axisMiddlePoint     = 1023 / 2;   // 1023 is the default max value of analog
+int wiperMiddlePoint    = 512 / 2;    // result will be the middle point of wiper, which added/subtracted by the wiper threshold
+int wiperThreshold      = 180;        // it helps reading sensitivity of the Z-axis/Wiper
+int axisThreshold       = 80;         // it helps reading sensitivity X & Y axis
 
 void setup() {
   Serial.begin(9600);
@@ -50,6 +50,7 @@ void setup() {
   pinMode(PUSH_LED_STATE, OUTPUT);
   pinMode(SI_PIN, OUTPUT);
 }
+
 void loop() {
   lcd.clear();
   X_val = analogRead(JOYX_PIN);
@@ -80,6 +81,7 @@ void loop() {
   command();
   //delay(10);
 }
+
 void command() {
   String cmds;
   for (int i = 0; i < 2; i++) {
@@ -137,6 +139,7 @@ void command() {
     }
   }
 }
+
 void encode_cmd( int code) {
   int w1 = 0, w2 = 0;
   /* start code  4 x W2, 500Hz, Duty Cycle 75% */
